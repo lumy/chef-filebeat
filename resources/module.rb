@@ -1,3 +1,4 @@
+# coding: utf-8
 #
 # Cookbook:: filebeat
 # Resource:: filebeat_prospector
@@ -25,19 +26,16 @@ action :update do
 
   config = new_resource.config.dup
   config = [config] unless new_resource.config.is_a?(Array)
+  module_name = new_resource.module_name
 
   # Filebeat and psych v1.x don't get along.
   if Psych::VERSION.start_with?('1')
     defaultengine = YAML::ENGINE.yamler
     YAML::ENGINE.yamler = 'syck'
   end
+  config[0] = {'module': module_name}.merge(config[0])
+  file_content = JSON.parse(config.to_json).to_yaml.lines.to_a[1..-1].join
 
-  file_content =
-    if filebeat_install_resource.version.to_f >= 6.3
-      JSON.parse(config.to_json).to_yaml.lines.to_a[1..-1].join
-    else
-      JSON.parse({ 'module' => { module_name => config } }.to_json).to_yaml.lines.to_a[1..-1].join
-    end
   # ...and put this back the way we found them.
   YAML::ENGINE.yamler = defaultengine if Psych::VERSION.start_with?('1')
 
