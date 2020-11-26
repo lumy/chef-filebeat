@@ -55,6 +55,9 @@ module Filebeat
     def default_prospectors_dir(conf_dir)
       node['platform'] == 'windows' ? "#{conf_dir}/conf.d" : ::File.join(conf_dir, 'conf.d')
     end
+    def default_modules_dir(conf_dir)
+      node['platform'] == 'windows' ? "#{conf_dir}/modules.d" : ::File.join(conf_dir, 'modules.d')
+    end
 
     def check_beat_resource(run_context, resource_type, resource_name = 'default')
       run_context.resource_collection.find(resource_type => resource_name)

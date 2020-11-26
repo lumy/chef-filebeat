@@ -13,8 +13,10 @@ property :service_name, String, default: 'filebeat'
 property :notify_restart, [true, false], default: true
 property :disable_service, [true, false], default: false
 property :delete_prospectors_dir, [true, false], default: false
+property :delete_modules_dir, [true, false], default: false
 property :conf_dir, [String, NilClass]
 property :prospectors_dir, [String, NilClass]
+property :modules_dir, [String, NilClass]
 property :log_dir, [String, NilClass]
 property :windows_package_url, String, default: 'auto'
 property :windows_base_dir, String, default: 'C:/opt/filebeat'
@@ -26,6 +28,7 @@ default_action :create
 action :create do
   new_resource.conf_dir = new_resource.conf_dir || default_config_dir(new_resource.version, new_resource.windows_base_dir)
   new_resource.prospectors_dir = new_resource.prospectors_dir || default_prospectors_dir(new_resource.conf_dir)
+  new_resource.modules_dir = new_resource.modules_dir || default_modules_dir(new_resource.conf_dir)
   new_resource.log_dir = new_resource.log_dir || default_log_dir(new_resource.conf_dir)
   version_string = platform_family?('fedora', 'rhel', 'amazon') ? "#{new_resource.version}-#{new_resource.release}" : new_resource.version
 
@@ -137,8 +140,13 @@ action :create do
   end
 
   prospectors_dir_action = new_resource.delete_prospectors_dir ? %i(delete create) : %i(create)
+  module_dir_action = new_resource.delete_modules_dir ? %i(delete create) : %i(create)
 
   directory new_resource.prospectors_dir do
+    recursive true
+    action prospectors_dir_action
+  end
+  directory new_resource.modules_dir do
     recursive true
     action prospectors_dir_action
   end
