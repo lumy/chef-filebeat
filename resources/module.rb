@@ -28,6 +28,11 @@ action :update do
   config = [config] unless new_resource.config.is_a?(Array)
   module_name = new_resource.module_name
 
+  if not config[0]['enabled']
+    deactivate_module module_name, filebeat_install_resource.modules_dir
+    return
+  end
+  config[0].delete('enabled')
   # Filebeat and psych v1.x don't get along.
   if Psych::VERSION.start_with?('1')
     defaultengine = YAML::ENGINE.yamler
@@ -68,21 +73,7 @@ action :update do
 
 end
 
-action :delete do
-  module_file_name = "#{new_resource.name}.yml"
-  filebeat_install_resource = find_beat_resource(Chef.run_context, :filebeat_install, new_resource.filebeat_install_resource_name)
-  # Copy content module into disabled file
-  file "module_#{new_resource.name}" do
-    path "#{::File.join(filebeat_install_resource.module_dir, module_file_name)}.disabled"
-    content ::File.open(::File.join(filebeat_install_resource.module_dir, module_file_name)).read
-    action :create
-  end
-  # Remove module file.
-  file "module_#{new_resource.name}" do
-    path ::File.join(filebeat_install_resource.module_dir, module_file_name)
-    action :delete
-  end
-end
+
 
 action_class do
   include ::Filebeat::Helpers

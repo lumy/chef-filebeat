@@ -22,6 +22,25 @@ module Filebeat
       Chef::Log.info("\n could not find any filebeat prospector configuration file to purge") if extra_prospectors.empty?
     end
 
+    def deactivate_module(name, module_dir)
+      module_file_name = "#{name}.yml"
+      module_full_path = ::File.join(module_dir, module_file_name)
+      if ::File.exist?(module_full_path)
+        # Copy content module into disabled file
+        file "module_#{new_resource.name}" do
+          path "#{module_full_path}.disabled"
+          content ::File.open(module_full_path).read
+          action :create
+        end
+
+        # Remove module file.
+        file "module_#{new_resource.name}" do
+          path module_full_path
+          action :delete
+        end
+      end
+    end
+
     def machine_arch
       node['kernel']['machine'] =~ /x86_64/ ? 'x86_64' : 'x86'
     end
